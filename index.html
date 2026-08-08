@@ -668,6 +668,8 @@ function renderFinal(app){
   renderLog(container);
   container.appendChild(el('button',{class:'btn-ghost', onclick:resetMatch},'Start a new match'));
   app.appendChild(container);
+}
+
 loadState();
 
 if ('serviceWorker' in navigator) {
