@@ -933,7 +933,7 @@ function renderTiePrompt(container){
 
 function buildPointsTable(rows, titleText){
   const card = el('div',{class:'card'});
-  card.appendChild(el('div',{class:'card-title'}, titleText));
+  card.appendChild(el('div',{class:'card-title', style:'text-align:center'}, titleText));
   const maxPts = rows[0].pts;
   const table = el('table',{class:'points-table'});
   rows.forEach(r=>{
