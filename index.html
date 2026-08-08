@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#143327">
 <link rel="icon" href="icon-192.png">
@@ -14,80 +14,138 @@
 <title>Golf Goons</title>
 <style>
   :root{
-    --navy:#0C2340;
-    --navy-light:#173a63;
-    --red:#C8102E;
+    --green:#143327;
+    --green-accent:#2E6E4E;
+    --green-dim:rgba(255,255,255,0.6);
     --cream:#F5F1E6;
-    --gold:#C9A227;
-    --ink:#1a1a1a;
-    --line:#d9d2bf;
+    --card:#FFFDF8;
+    --rust:#B05C38;
+    --rust-dark:#954A2D;
+    --teamA-onDark:#9AD8B4;
+    --teamB-onDark:#F0AA80;
+    --ink:#182620;
+    --muted:#8A8575;
+    --line:#E3DCC8;
+    --warn-bg:#FBEEE7;
+    --good-bg:#EAF0E9;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0;padding:0;}
   body{
     background:var(--cream);
-    color:var(--navy);
+    color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
     min-height:100vh;
-    padding-bottom:40px;
-  }
-  .display{
-    font-family:'Arial Narrow',-apple-system,sans-serif;
-    font-weight:800;
-    letter-spacing:0.02em;
-  }
-  header{
-    background:var(--navy);
-    color:var(--cream);
-    padding:18px 20px 16px;
-    position:sticky;
-    top:0;
-    z-index:10;
-    box-shadow:0 2px 8px rgba(0,0,0,0.15);
-  }
-  header .eyebrow{
-    font-size:11px;
-    letter-spacing:0.14em;
-    text-transform:uppercase;
-    opacity:0.65;
-    margin-bottom:2px;
-  }
-  header .title-row{
-    display:flex;
-    justify-content:space-between;
-    align-items:baseline;
-  }
-  header h1{
-    margin:0;
-    font-size:22px;
-    font-weight:800;
-  }
-  header .hole-badge{
-    font-size:34px;
-    font-weight:800;
-    line-height:1;
+    padding-bottom:calc(32px + env(safe-area-inset-bottom));
   }
   .container{
     max-width:480px;
     margin:0 auto;
-    padding:16px;
+    padding:14px;
   }
+
+  /* ---------- Header / live scoreboard ---------- */
+  header{
+    background:var(--green);
+    color:var(--cream);
+    padding:10px 14px calc(14px);
+    padding-top:calc(10px + env(safe-area-inset-top));
+    position:sticky;
+    top:0;
+    z-index:10;
+    box-shadow:0 2px 12px rgba(0,0,0,0.22);
+  }
+  .hdr-inner{ max-width:480px; margin:0 auto; }
+  .hdr-eyebrow{
+    text-align:center;
+    font-size:10px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    opacity:0.55;
+    margin-bottom:8px;
+  }
+  .hdr-main{
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
+    align-items:center;
+    gap:6px;
+  }
+  .hdr-team{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    font-size:clamp(15px,4.6vw,19px);
+    font-weight:800;
+    line-height:1.15;
+  }
+  .hdr-team.a{ color:var(--teamA-onDark); }
+  .hdr-team.b{ color:var(--teamB-onDark); }
+  .hdr-side{ min-width:0; }
+  .hdr-up{
+    font-size:clamp(17px,5.2vw,21px);
+    font-weight:800;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    text-align:center;
+    margin-top:7px;
+    line-height:1.05;
+  }
+  .hdr-up.a{ color:var(--teamA-onDark); }
+  .hdr-up.b{ color:var(--teamB-onDark); }
+  .hdr-up.blank{ visibility:hidden; }
+  .hdr-hole{ text-align:center; padding:0 10px; }
+  .hdr-hole .lbl{
+    font-size:10px;
+    letter-spacing:0.16em;
+    font-weight:600;
+    color:var(--cream);
+    margin-bottom:2px;
+  }
+  .hdr-hole .num{
+    font-size:46px;
+    font-weight:800;
+    line-height:0.86;
+    letter-spacing:-0.02em;
+  }
+  .hdr-status{ text-align:center; margin-top:11px; }
+  .pill{
+    display:inline-block;
+    padding:5px 15px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.11);
+    font-size:13px;
+    font-weight:800;
+    letter-spacing:0.07em;
+    text-transform:uppercase;
+  }
+  .pill.lead-a{ color:var(--teamA-onDark); }
+  .pill.lead-b{ color:var(--teamB-onDark); }
+  .pill.square{ color:rgba(255,255,255,0.72); }
+  .pill.edit{ color:var(--teamB-onDark); background:rgba(240,170,128,0.16); }
+
+  /* ---------- Cards ---------- */
   .card{
-    background:#fff;
+    background:var(--card);
     border:1px solid var(--line);
-    border-radius:10px;
-    padding:16px;
-    margin-bottom:14px;
-  }
-  .setup-field{
+    border-radius:14px;
+    padding:14px;
     margin-bottom:12px;
   }
+  .card-title{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    color:var(--muted);
+    margin-bottom:10px;
+  }
+  .setup-field{ margin-bottom:12px; }
   .setup-field label{
     display:block;
     font-size:12px;
     text-transform:uppercase;
     letter-spacing:0.08em;
-    color:#666;
+    color:var(--muted);
     margin-bottom:4px;
   }
   .setup-field input{
@@ -97,162 +155,167 @@
     border:1px solid var(--line);
     border-radius:8px;
     background:var(--cream);
+    color:var(--ink);
   }
-  button{
-    font-family:inherit;
-    cursor:pointer;
-    border:none;
-  }
+  button{ font-family:inherit; cursor:pointer; border:none; }
   .btn-primary{
     width:100%;
-    background:var(--red);
+    background:var(--rust);
     color:#fff;
     font-size:16px;
     font-weight:700;
-    padding:14px;
-    border-radius:8px;
+    padding:15px;
+    border-radius:10px;
     letter-spacing:0.02em;
   }
   .btn-primary:active{ opacity:0.85; }
-  .btn-primary:disabled{ background:#c9b8ba; }
+  .btn-primary:disabled{ background:#d8beae; }
   .btn-ghost{
     background:transparent;
-    color:var(--navy);
+    color:var(--green);
     font-size:13px;
     text-decoration:underline;
-    padding:6px;
+    padding:8px 6px;
   }
-  .team-label{
-    font-size:11px;
-    text-transform:uppercase;
-    letter-spacing:0.1em;
-    color:#888;
-    margin:14px 0 6px;
+  .foot-actions{ display:flex; justify-content:center; gap:18px; }
+
+  /* ---------- Score entry ---------- */
+  .entry-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    align-items:start;
+    gap:9px;
   }
-  .team-label:first-child{ margin-top:0; }
-  .player-row{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:10px 0;
-    border-bottom:1px solid #eee;
+  .col{
+    min-width:0;
+    padding:12px 8px 10px;
+    border-radius:11px;
   }
-  .player-row:last-child{ border-bottom:none; }
-  .player-name{
-    font-size:16px;
-    font-weight:600;
+  .col.a{ background:rgba(46,110,78,0.08); }
+  .col.b{ background:rgba(176,92,56,0.08); }
+  .pcell{ margin-bottom:12px; }
+  .pcell:last-child{ margin-bottom:0; }
+  .pname{
+    font-size:clamp(17px,5.2vw,20px);
+    font-weight:800;
+    text-align:center;
+    margin-bottom:7px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
   }
+  .col.a .pname{ color:var(--green-accent); }
+  .col.b .pname{ color:var(--rust); }
   .stepper{
     display:flex;
     align-items:center;
-    gap:10px;
+    justify-content:space-between;
+    gap:2px;
   }
   .stepper button{
-    width:34px;
-    height:34px;
+    width:clamp(32px,9.5vw,38px);
+    height:clamp(32px,9.5vw,38px);
     border-radius:50%;
-    background:var(--navy);
+    background:var(--green);
     color:#fff;
-    font-size:18px;
+    font-size:17px;
     font-weight:700;
     display:flex;
     align-items:center;
     justify-content:center;
+    flex:0 0 auto;
+    transition:transform 0.08s ease;
   }
+  .stepper button:active{ transform:scale(0.9); }
   .stepper .val{
-    width:28px;
+    flex:1 1 auto;
     text-align:center;
-    font-size:20px;
+    font-size:24px;
     font-weight:800;
+    font-variant-numeric:tabular-nums;
   }
-  .window-tracker{
-    display:flex;
-    gap:6px;
-    margin-top:4px;
+  .rule-status{
+    font-size:11px;
+    line-height:1.35;
+    color:var(--muted);
+    text-align:center;
+    margin-top:10px;
   }
-  .dot{
-    width:8px;height:8px;border-radius:50%;
-    background:#ddd;
+  .rule-status.forced{
+    color:var(--rust-dark);
+    font-weight:700;
+    background:var(--warn-bg);
+    padding:7px 9px;
+    border-radius:7px;
   }
-  .dot.filled{ background:var(--gold); }
+  .entry-actions{ margin-top:14px; display:flex; gap:8px; align-items:center; }
+
+  /* ---------- Tie prompt ---------- */
   .tie-prompt{
-    background:#fff8e8;
-    border:1px solid var(--gold);
-    border-radius:8px;
+    background:var(--warn-bg);
+    border:1px solid var(--rust);
+    border-radius:10px;
     padding:12px;
     margin-top:10px;
   }
-  .tie-prompt p{ margin:0 0 8px; font-size:14px; }
+  .tie-prompt p{ margin:0 0 10px; font-size:14px; }
   .tie-btns{ display:flex; gap:8px; }
   .tie-btns button{
     flex:1;
-    padding:10px;
-    border-radius:6px;
-    background:var(--navy);
+    padding:12px;
+    border-radius:8px;
+    background:var(--green);
     color:#fff;
     font-weight:600;
-    font-size:14px;
+    font-size:15px;
   }
-  .scoreboard{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    font-size:14px;
-  }
-  .score-pair{
-    display:flex;
-    gap:18px;
-  }
-  .score-pair .team{ text-align:center; }
-  .score-pair .num{ font-size:26px; font-weight:800; }
-  .score-pair .lbl{ font-size:11px; color:#888; text-transform:uppercase; }
-  .log{
-    max-height:180px;
-    overflow-y:auto;
-    font-size:13px;
-  }
-  .log-row{
-    display:flex;
-    justify-content:space-between;
-    padding:6px 0;
-    border-bottom:1px solid #f0f0f0;
-  }
-  .log-row .win-A{ color:var(--navy); font-weight:700; }
-  .log-row .win-B{ color:var(--red); font-weight:700; }
-  .log-row .win-tie{ color:#999; }
-  .points-table{
-    width:100%;
-    border-collapse:collapse;
-  }
-  .points-table td{
-    padding:8px 4px;
-    border-bottom:1px solid #eee;
-  }
+
+  /* ---------- Points + log ---------- */
+  .points-table{ width:100%; border-collapse:collapse; }
+  .points-table td{ padding:9px 4px; border-bottom:1px solid #f0ece0; }
+  .points-table tr:last-child td{ border-bottom:none; }
+  .points-table td:first-child{ font-weight:600; }
   .points-table td:last-child{
     text-align:right;
     font-weight:800;
     font-size:18px;
-    color:var(--red);
+    color:var(--rust);
   }
+  .log{ max-height:230px; overflow-y:auto; font-size:13px; }
+  .log-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    padding:9px 4px;
+    border-bottom:1px solid #f0ece0;
+    border-radius:7px;
+  }
+  .log-row:last-child{ border-bottom:none; }
+  .log-row:active{ background:var(--good-bg); }
+  .log-hole{ color:var(--muted); font-weight:700; margin-right:6px; }
+  .log-result{ font-weight:700; white-space:nowrap; }
+  .log-result.win-A{ color:var(--green-accent); }
+  .log-result.win-B{ color:var(--rust); }
+  .log-result.win-tie{ color:var(--muted); font-weight:600; }
+
   .final-banner{
-    background:var(--navy);
+    background:var(--green);
     color:var(--cream);
     text-align:center;
-    padding:22px 16px;
-    border-radius:10px;
-    margin-bottom:14px;
+    padding:26px 16px;
+    border-radius:14px;
+    margin-bottom:12px;
   }
   .final-banner .win-name{
-    font-size:24px;
+    font-size:26px;
     font-weight:800;
-    color:var(--gold);
-    margin:6px 0;
+    color:var(--teamB-onDark);
+    margin:8px 0;
   }
-  .hint{
-    font-size:12px;
-    color:#888;
-    margin-top:6px;
-  }
+  .notice-card.segment{ border:2px solid var(--green); background:var(--good-bg); }
+  .notice-card.forced{ border:2px solid var(--rust); background:var(--warn-bg); }
+  .hint{ font-size:12px; color:var(--muted); margin-top:6px; }
 </style>
 </head>
 <body>
@@ -264,7 +327,7 @@ const STORAGE_KEY = 'sunday-match-v1';
 const API_URL = 'https://script.google.com/macros/s/AKfycbwHg2DpzzaTCaDSPupcASh5y8W8KYSodagx8KrN6IzPXVW6llXAjDF8OxLYrxVmzIs7/exec';
 let state = null;
 let loading = true;
-let pendingTies = null; // { holeStrokes, ties: [teamIdx,...], resolved: {} }
+let pendingTies = null; // { strokes, ties: [teamIdx,...], resolved: {}, holeNum }
 
 function segFor(holeNum){ return Math.floor((holeNum-1)/6); }
 function holeInSegFor(holeNum){ return ((holeNum-1)%6)+1; }
@@ -329,6 +392,10 @@ function startMatch(names){
 async function resetMatch(){
   if(!confirm('Start a new match? This clears the current one for everyone.')) return;
   state = null;
+  editingHole = null;
+  strokeInputsHole = null;
+  notice = null;
+  pendingTies = null;
   try{
     await fetch(API_URL, {
       method: 'POST',
@@ -413,16 +480,16 @@ function computeNotice(justFinishedHoleNum){
   const nextSeg = segFor(nextHole);
   const pairing = state.pairings[nextSeg];
   if(nextSeg !== finishedSeg){
-    const teamA = pairing[0].map(i=>state.players[i]).join(' & ');
-    const teamB = pairing[1].map(i=>state.players[i]).join(' & ');
+    const teamA = pairing[0].map(i=>firstName(state.players[i])).join(' & ');
+    const teamB = pairing[1].map(i=>firstName(state.players[i])).join(' & ');
     return { type:'segment', teamA, teamB, holeRange: `${nextSeg*6+1}-${nextSeg*6+6}` };
   }
   if(holePosInWindow(nextHole)===3){
     const names = [];
     for(let t=0;t<2;t++){
       const [used0, used1] = usedFlagsForTeam(nextHole, t);
-      if(!used0 && used1) names.push(state.players[pairing[t][0]]);
-      else if(!used1 && used0) names.push(state.players[pairing[t][1]]);
+      if(!used0 && used1) names.push(firstName(state.players[pairing[t][0]]));
+      else if(!used1 && used0) names.push(firstName(state.players[pairing[t][1]]));
     }
     if(names.length>0){
       return { type:'forced', names, holeNum: nextHole };
@@ -453,7 +520,10 @@ function resolveTie(teamIdx, chosenLocal){
 function startEditHole(holeNum){
   editingHole = holeNum;
   strokeInputsHole = null;
+  pendingTies = null;
+  notice = null;
   render();
+  window.scrollTo({top:0, behavior:'smooth'});
 }
 
 function segmentPoints(seg){
@@ -469,6 +539,14 @@ function segmentPoints(seg){
   return {winsA, winsB, complete, pairing};
 }
 
+// Match-play status for a 6-hole segment: A/S, or "N UP" for the leader.
+function matchStatus(seg){
+  const {winsA, winsB} = segmentPoints(seg);
+  const diff = winsA - winsB;
+  if(diff === 0) return { lead:null, up:0 };
+  return { lead: diff>0 ? 'A' : 'B', up: Math.abs(diff) };
+}
+
 function totalPoints(){
   const pts = [0,0,0,0];
   for(let seg=0; seg<3; seg++){
@@ -478,6 +556,22 @@ function totalPoints(){
     else if(winsB>winsA){ pairing[1].forEach(p=>pts[p]++); }
   }
   return pts;
+}
+
+// Players ranked by points, highest first; ties keep their original order.
+function rankedPoints(){
+  const pts = totalPoints();
+  return state.players
+    .map((name,i)=>({ name:firstName(name), pts:pts[i], idx:i }))
+    .sort((a,b)=> b.pts - a.pts || a.idx - b.idx);
+}
+
+function teamNames(seg){
+  const pairing = state.pairings[seg];
+  return [
+    pairing[0].map(i=>firstName(state.players[i])).join(' & '),
+    pairing[1].map(i=>firstName(state.players[i])).join(' & ')
+  ];
 }
 
 function el(tag, attrs, ...children){
@@ -495,17 +589,25 @@ function el(tag, attrs, ...children){
   return e;
 }
 
+function firstName(fullName){
+  return fullName.split(' ')[0];
+}
+
 let strokeInputs = [4,4,4,4];
 let strokeInputsHole = null;
 let editingHole = null;
 let notice = null;
+
+function activeHole(){
+  return editingHole !== null ? editingHole : Math.min(state.currentHole, 18);
+}
 
 function render(){
   const app = document.getElementById('app');
   app.innerHTML = '';
 
   if(loading){
-    app.appendChild(el('div',{class:'container'}, el('p',null,'Loading...')));
+    app.appendChild(el('div',{class:'container'}, el('p',null,'Loading…')));
     return;
   }
 
@@ -528,25 +630,27 @@ function render(){
   } else if(pendingTies){
     renderTiePrompt(container);
   } else {
-    const activeHole = editingHole !== null ? editingHole : state.currentHole;
-    if(strokeInputsHole !== activeHole){
-      const existing = state.holes[activeHole-1];
+    const hole = activeHole();
+    if(strokeInputsHole !== hole){
+      const existing = state.holes[hole-1];
       strokeInputs = existing ? [...existing.strokes] : [4,4,4,4];
-      strokeInputsHole = activeHole;
+      strokeInputsHole = hole;
     }
     renderScoreEntry(container);
   }
   renderScoreboard(container);
   renderLog(container);
-  container.appendChild(el('button',{class:'btn-ghost', onclick:refreshState},'Refresh scores'));
-  container.appendChild(el('button',{class:'btn-ghost', onclick:resetMatch},'Start a new match'));
+  container.appendChild(el('div',{class:'foot-actions'},
+    el('button',{class:'btn-ghost', onclick:refreshState},'Refresh scores'),
+    el('button',{class:'btn-ghost', onclick:resetMatch},'Start a new match')
+  ));
 }
 
 function renderSetup(app){
   const container = el('div',{class:'container'});
   container.appendChild(el('div',{class:'card'},
     el('h2',{style:'margin-top:0'},'⛳ Golf Goons'),
-    el('p',{class:'hint'},"2v2 rotating best ball, 6-hole segments, must count each teammate's score once every 3 holes."),
+    el('p',{class:'hint'},"2v2 rotating best ball, 6-hole matches. Each teammate's score has to count at least once every 3 holes."),
     ...[0,1,2,3].map(i=>
       el('div',{class:'setup-field'},
         el('label',null, `Player ${i+1}`),
@@ -557,74 +661,99 @@ function renderSetup(app){
       const names = [0,1,2,3].map(i=>document.getElementById(`name-${i}`).value.trim());
       if(names.some(n=>!n)){ alert('Enter all 4 names.'); return; }
       startMatch(names);
-    }}, 'Start Match')
+    }}, 'Start match')
   ));
   app.appendChild(container);
 }
 
 function renderHeader(app){
-  const holeNum = state.currentHole;
+  const holeNum = activeHole();
   const seg = segFor(holeNum);
-  const pairing = state.pairings[seg];
-  const teamA = pairing[0].map(i=>state.players[i]).join(' & ');
-  const teamB = pairing[1].map(i=>state.players[i]).join(' & ');
+  const [nameA, nameB] = teamNames(seg);
+  const st = matchStatus(seg);
+
+  // "N UP" sits under the leading team in that team's colour; the losing side
+  // keeps an invisible copy so the hole number stays optically centred.
+  const upText = st.lead === null ? null : `${st.up} up`;
+  const upLine = (side)=> el('div',{
+    class:'hdr-up '+side+(st.lead===(side==='a'?'A':'B') ? '' : ' blank')
+  }, upText || '0 up');
+
+  let centreEl = null;
+  if(editingHole !== null){
+    centreEl = el('span',{class:'pill edit'}, `Editing hole ${editingHole}`);
+  } else if(st.lead === null){
+    centreEl = el('span',{class:'pill square'}, 'A/S');
+  }
+
   const header = el('header',null,
-    el('div',{class:'container', style:'padding:0'},
-      el('div',{class:'eyebrow'}, `Golf Goons · Match ${seg+1} of 3 · Holes ${seg*6+1}-${seg*6+6}`),
-      el('div',{class:'title-row'},
-        el('div',null,
-          el('h1',null, `${teamA} vs ${teamB}`)
+    el('div',{class:'hdr-inner'},
+      el('div',{class:'hdr-eyebrow'}, `Match ${seg+1} of 3 · Holes ${seg*6+1}\u2013${seg*6+6}`),
+      el('div',{class:'hdr-main'},
+        el('div',{class:'hdr-side a'},
+          el('div',{class:'hdr-team a'}, el('span',null,nameA)),
+          upText ? upLine('a') : null
         ),
-        el('div',{class:'hole-badge display'}, holeNum)
-      )
+        el('div',{class:'hdr-hole'},
+          el('div',{class:'lbl'},'HOLE'),
+          el('div',{class:'num'}, holeNum)
+        ),
+        el('div',{class:'hdr-side b'},
+          el('div',{class:'hdr-team b'}, el('span',null,nameB)),
+          upText ? upLine('b') : null
+        )
+      ),
+      centreEl ? el('div',{class:'hdr-status'}, centreEl) : null
     )
   );
   app.appendChild(header);
 }
 
 function renderScoreEntry(container){
-  const holeNum = editingHole !== null ? editingHole : state.currentHole;
+  const holeNum = activeHole();
   const seg = segFor(holeNum);
   const pairing = state.pairings[seg];
   const card = el('div',{class:'card'});
-  card.appendChild(el('h3',{style:'margin:0 0 4px'},
-    editingHole !== null ? `Editing Hole ${holeNum}` : `Hole ${holeInSegFor(holeNum)} of this segment`
-  ));
+  const grid = el('div',{class:'entry-grid'});
 
   [0,1].forEach(t=>{
-    card.appendChild(el('div',{class:'team-label'}, t===0?'Team A':'Team B'));
-    pairing[t].forEach((globalIdx)=>{
-      const row = el('div',{class:'player-row'},
-        el('div',null,
-          el('div',{class:'player-name'}, state.players[globalIdx]),
-        ),
+    const col = el('div',{class:'col '+(t===0?'a':'b')});
+
+    pairing[t].forEach(globalIdx=>{
+      col.appendChild(el('div',{class:'pcell'},
+        el('div',{class:'pname'}, firstName(state.players[globalIdx])),
         el('div',{class:'stepper'},
-          el('button',{onclick:()=>{ strokeInputs[globalIdx]=Math.max(1,strokeInputs[globalIdx]-1); render(); }}, '−'),
+          el('button',{'aria-label':'Minus one', onclick:()=>{
+            strokeInputs[globalIdx]=Math.max(1,strokeInputs[globalIdx]-1); render();
+          }}, '−'),
           el('div',{class:'val'}, strokeInputs[globalIdx]),
-          el('button',{onclick:()=>{ strokeInputs[globalIdx]=strokeInputs[globalIdx]+1; render(); }}, '+')
+          el('button',{'aria-label':'Plus one', onclick:()=>{
+            strokeInputs[globalIdx]=strokeInputs[globalIdx]+1; render();
+          }}, '+')
         )
-      );
-      card.appendChild(row);
+      ));
     });
-    const dots = [0,1,2].map(i=>{
-      const pos = i+1;
-      const wStart = windowStartFor(holeNum);
-      const thisHolePos = holePosInWindow(holeNum);
-      let filled = false;
-      if(pos < thisHolePos){
-        const rec = state.holes[wStart+pos-2];
-        filled = rec && rec.counted && (rec.counted[t]===0 || rec.counted[t]===1);
-      }
-      return el('div',{class:'dot'+(filled?' filled':'')});
-    });
-    card.appendChild(el('div',{class:'window-tracker'}, ...dots));
+
+    const pos = holePosInWindow(holeNum);
+    const [used0, used1] = usedFlagsForTeam(holeNum, t);
+    const [n0, n1] = pairing[t].map(i=>firstName(state.players[i]));
+    if(pos===3 && ((!used0&&used1) || (!used1&&used0))){
+      col.appendChild(el('div',{class:'rule-status forced'}, `⚠ ${!used0?n0:n1} must count`));
+    } else if(pos>1 && (used0||used1)){
+      const usedNames = [used0&&n0, used1&&n1].filter(Boolean).join(' & ');
+      col.appendChild(el('div',{class:'rule-status'}, `Counted already: ${usedNames}`));
+    }
+
+    grid.appendChild(col);
   });
 
+  card.appendChild(grid);
+
   if(editingHole !== null){
-    card.appendChild(el('div',{style:'display:flex; gap:8px; margin-top:10px'},
+    card.appendChild(el('div',{class:'entry-actions'},
       el('button',{class:'btn-primary', style:'flex:1', onclick:()=>{
         submitHole([...strokeInputs], editingHole);
-      }}, 'Save Changes'),
+      }}, 'Save changes'),
       el('button',{class:'btn-ghost', style:'flex:0 0 auto', onclick:()=>{
         editingHole = null;
         strokeInputsHole = null;
@@ -632,26 +761,28 @@ function renderScoreEntry(container){
       }}, 'Cancel')
     ));
   } else {
-    card.appendChild(el('button',{class:'btn-primary', style:'margin-top:10px', onclick:()=>{
-      submitHole([...strokeInputs], holeNum);
-    }}, 'Record Hole'));
+    card.appendChild(el('div',{class:'entry-actions'},
+      el('button',{class:'btn-primary', onclick:()=>{
+        submitHole([...strokeInputs], holeNum);
+      }}, `Record hole ${holeNum}`)
+    ));
   }
 
   container.appendChild(card);
 }
 
 function renderNotice(container){
-  const card = el('div',{class:'card', style:'border:2px solid var(--gold); background:#fffbf0'});
+  const card = el('div',{class:'card notice-card '+(notice.type==='segment'?'segment':'forced')});
   if(notice.type==='segment'){
-    card.appendChild(el('h3',{style:'margin:0 0 8px'}, '🔄 Segment complete — new teams'));
-    card.appendChild(el('p',{style:'margin:0 0 4px; font-size:12px; color:#888; text-transform:uppercase; letter-spacing:0.06em'}, `Holes ${notice.holeRange}`));
+    card.appendChild(el('h3',{style:'margin:0 0 8px'}, '🔄 New match, new teams'));
+    card.appendChild(el('p',{style:'margin:0 0 4px; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em'}, `Holes ${notice.holeRange}`));
     card.appendChild(el('p',{style:'font-size:18px; font-weight:800; margin:6px 0 2px'}, notice.teamA));
-    card.appendChild(el('p',{style:'font-size:14px; color:#888; margin:0 0 4px'}, 'vs'));
+    card.appendChild(el('p',{style:'font-size:14px; color:var(--muted); margin:0 0 4px'}, 'vs'));
     card.appendChild(el('p',{style:'font-size:18px; font-weight:800; margin:0 0 10px'}, notice.teamB));
   } else {
     const namesText = notice.names.join(' and ');
     card.appendChild(el('h3',{style:'margin:0 0 8px'}, '⚠️ Rule reminder'));
-    card.appendChild(el('p',null, `On hole ${notice.holeNum}, you must count ${namesText}'s score for their team.`));
+    card.appendChild(el('p',null, `On hole ${notice.holeNum}, ${namesText}'s score has to count for their team.`));
   }
   card.appendChild(el('button',{class:'btn-primary', style:'margin-top:10px', onclick:()=>{ notice=null; render(); }}, 'Got it'));
   container.appendChild(card);
@@ -662,14 +793,14 @@ function renderTiePrompt(container){
   const seg = segFor(holeNum);
   const pairing = state.pairings[seg];
   const card = el('div',{class:'card'});
-  card.appendChild(el('h3',{style:'margin:0 0 4px'}, `Hole ${holeNum} — tie to break`));
+  card.appendChild(el('div',{class:'card-title'}, `Hole ${holeNum} · tie to break`));
   pendingTies.ties.forEach(t=>{
     if(t in pendingTies.resolved) return;
     const [gA,gB] = pairing[t];
-    const nameA = state.players[gA], nameB = state.players[gB];
+    const nameA = firstName(state.players[gA]), nameB = firstName(state.players[gB]);
     const score = pendingTies.strokes[gA];
     card.appendChild(el('div',{class:'tie-prompt'},
-      el('p',null, `${nameA} and ${nameB} tied at ${score}. Whose score counts toward the rule?`),
+      el('p',null, `${nameA} and ${nameB} both made ${score}. Whose score counts toward the rule?`),
       el('div',{class:'tie-btns'},
         el('button',{onclick:()=>resolveTie(t,0)}, nameA),
         el('button',{onclick:()=>resolveTie(t,1)}, nameB)
@@ -680,22 +811,14 @@ function renderTiePrompt(container){
 }
 
 function renderScoreboard(container){
-  const holeNum = Math.min(state.currentHole, 18);
-  const seg = segFor(holeNum);
-  const {winsA, winsB, pairing} = segmentPoints(seg);
   const card = el('div',{class:'card'});
-  card.appendChild(el('div',{class:'team-label'}, 'This segment'));
-  card.appendChild(el('div',{class:'scoreboard'},
-    el('div',{class:'score-pair'},
-      el('div',{class:'team'}, el('div',{class:'num'},winsA), el('div',{class:'lbl'},'Team A')),
-      el('div',{class:'team'}, el('div',{class:'num'},winsB), el('div',{class:'lbl'},'Team B'))
-    )
-  ));
-  card.appendChild(el('div',{class:'team-label', style:'margin-top:16px'}, 'Overall points'));
-  const pts = totalPoints();
+  card.appendChild(el('div',{class:'card-title'}, 'Overall points · 1 per match won'));
+  const rows = rankedPoints();
+  const maxPts = rows[0].pts;
   const table = el('table',{class:'points-table'});
-  state.players.forEach((name,i)=>{
-    table.appendChild(el('tr',null, el('td',null,name), el('td',null,pts[i])));
+  rows.forEach(r=>{
+    const trophy = (maxPts>0 && r.pts===maxPts) ? ' 🏆' : '';
+    table.appendChild(el('tr',null, el('td',null,r.name+trophy), el('td',null,r.pts)));
   });
   card.appendChild(table);
   container.appendChild(card);
@@ -705,20 +828,24 @@ function renderLog(container){
   const done = state.holes.map((h,i)=>h?({...h, holeNum:i+1}):null).filter(Boolean).reverse();
   if(done.length===0) return;
   const card = el('div',{class:'card'});
-  card.appendChild(el('div',{class:'team-label'},'Hole log · tap to edit'));
+  card.appendChild(el('div',{class:'card-title'},'Hole log · tap to edit'));
   const log = el('div',{class:'log'});
   done.forEach(rec=>{
     const seg = segFor(rec.holeNum);
     const pairing = state.pairings[seg];
-    const nameA = state.players[pairing[0][rec.counted[0]]];
-    const nameB = state.players[pairing[1][rec.counted[1]]];
+    const names = teamNames(seg);
+    const nameA = firstName(state.players[pairing[0][rec.counted[0]]]);
+    const nameB = firstName(state.players[pairing[1][rec.counted[1]]]);
     const scoreA = rec.strokes[pairing[0][rec.counted[0]]];
     const scoreB = rec.strokes[pairing[1][rec.counted[1]]];
     const winClass = rec.winner==='A'?'win-A':rec.winner==='B'?'win-B':'win-tie';
-    const winText = rec.winner==='A'?'Team A':rec.winner==='B'?'Team B':'Halved';
-    log.appendChild(el('div',{class:'log-row', style:'cursor:pointer', onclick:()=>startEditHole(rec.holeNum)},
-      el('span',null, `#${rec.holeNum}: ${nameA} ${scoreA} — ${nameB} ${scoreB}`),
-      el('span',{class:winClass}, winText)
+    const winText = rec.winner==='A'?names[0]:rec.winner==='B'?names[1]:'Halved';
+    log.appendChild(el('div',{class:'log-row', onclick:()=>startEditHole(rec.holeNum)},
+      el('span',null,
+        el('span',{class:'log-hole'}, `${rec.holeNum}`),
+        `${nameA} ${scoreA} — ${nameB} ${scoreB}`
+      ),
+      el('span',{class:'log-result '+winClass}, winText)
     ));
   });
   card.appendChild(log);
@@ -727,24 +854,27 @@ function renderLog(container){
 
 function renderFinal(app){
   const container = el('div',{class:'container'});
-  const pts = totalPoints();
-  const max = Math.max(...pts);
-  const winners = state.players.filter((_,i)=>pts[i]===max);
+  const rows = rankedPoints();
+  const max = rows[0].pts;
+  const winners = rows.filter(r=>r.pts===max).map(r=>r.name);
   container.appendChild(el('div',{class:'final-banner'},
-    el('div',{class:'eyebrow', style:'opacity:0.7'}, 'Match Complete'),
-    el('div',{class:'win-name'}, winners.length>1 ? winners.join(' & ')+' tie' : winners[0]),
+    el('div',{style:'font-size:10px; letter-spacing:0.12em; text-transform:uppercase; opacity:0.6'}, 'Match complete'),
+    el('div',{class:'win-name'}, '🏆 '+(winners.length>1 ? winners.join(' & ')+' tie' : winners[0])),
     el('div',null, `${max} point${max===1?'':'s'}`)
   ));
   const card = el('div',{class:'card'});
-  card.appendChild(el('div',{class:'team-label'},'Final points'));
+  card.appendChild(el('div',{class:'card-title'},'Final points'));
   const table = el('table',{class:'points-table'});
-  state.players.forEach((name,i)=>{
-    table.appendChild(el('tr',null, el('td',null,name), el('td',null,pts[i])));
+  rows.forEach(r=>{
+    const trophy = (max>0 && r.pts===max) ? ' 🏆' : '';
+    table.appendChild(el('tr',null, el('td',null,r.name+trophy), el('td',null,r.pts)));
   });
   card.appendChild(table);
   container.appendChild(card);
   renderLog(container);
-  container.appendChild(el('button',{class:'btn-ghost', onclick:resetMatch},'Start a new match'));
+  container.appendChild(el('div',{class:'foot-actions'},
+    el('button',{class:'btn-ghost', onclick:resetMatch},'Start a new match')
+  ));
   app.appendChild(container);
 }
 
