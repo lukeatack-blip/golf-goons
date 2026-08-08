@@ -363,8 +363,7 @@ function determineCountedForTeam(holeNum, teamIdx, sA, sB){
   return {counted: sA<sB?0:1, forced:false};
 }
 
-function submitHole(strokes){
-  const holeNum = state.currentHole;
+function submitHole(strokes, holeNum){
   const seg = segFor(holeNum);
   const pairing = state.pairings[seg];
   const results = [];
@@ -377,15 +376,14 @@ function submitHole(strokes){
     if(d.tie) ties.push(t);
   }
   if(ties.length>0){
-    pendingTies = { strokes, ties, resolved:{} };
+    pendingTies = { strokes, ties, resolved:{}, holeNum };
     render();
     return;
   }
-  finalizeHole(strokes, results.map(r=>r.counted));
+  finalizeHole(strokes, results.map(r=>r.counted), holeNum);
 }
 
-function finalizeHole(strokes, countedArr){
-  const holeNum = state.currentHole;
+function finalizeHole(strokes, countedArr, holeNum){
   const seg = segFor(holeNum);
   const pairing = state.pairings[seg];
   const scoreA = strokes[pairing[0][countedArr[0]]];
@@ -394,7 +392,12 @@ function finalizeHole(strokes, countedArr){
   if(scoreA<scoreB) winner='A';
   else if(scoreB<scoreA) winner='B';
   state.holes[holeNum-1] = { strokes, counted: countedArr, winner };
-  state.currentHole = holeNum+1;
+  const wasEditing = editingHole !== null;
+  if(!wasEditing && holeNum === state.currentHole){
+    state.currentHole = holeNum+1;
+  }
+  editingHole = null;
+  strokeInputsHole = null;
   pendingTies = null;
   saveState();
   render();
@@ -404,7 +407,7 @@ function resolveTie(teamIdx, chosenLocal){
   pendingTies.resolved[teamIdx] = chosenLocal;
   const stillPending = pendingTies.ties.filter(t=>!(t in pendingTies.resolved));
   if(stillPending.length>0){ render(); return; }
-  const holeNum = state.currentHole;
+  const holeNum = pendingTies.holeNum;
   const seg = segFor(holeNum);
   const pairing = state.pairings[seg];
   const countedArr = [0,0];
@@ -416,7 +419,13 @@ function resolveTie(teamIdx, chosenLocal){
       countedArr[t] = sA<sB?0:1;
     }
   }
-  finalizeHole(pendingTies.strokes, countedArr);
+  finalizeHole(pendingTies.strokes, countedArr, holeNum);
+}
+
+function startEditHole(holeNum){
+  editingHole = holeNum;
+  strokeInputsHole = null;
+  render();
 }
 
 function segmentPoints(seg){
@@ -459,6 +468,8 @@ function el(tag, attrs, ...children){
 }
 
 let strokeInputs = [4,4,4,4];
+let strokeInputsHole = null;
+let editingHole = null;
 
 function render(){
   const app = document.getElementById('app');
@@ -474,7 +485,7 @@ function render(){
     return;
   }
 
-  if(state.currentHole > 18){
+  if(state.currentHole > 18 && editingHole===null){
     renderFinal(app);
     return;
   }
@@ -486,7 +497,12 @@ function render(){
   if(pendingTies){
     renderTiePrompt(container);
   } else {
-    strokeInputs = [4,4,4,4];
+    const activeHole = editingHole !== null ? editingHole : state.currentHole;
+    if(strokeInputsHole !== activeHole){
+      const existing = state.holes[activeHole-1];
+      strokeInputs = existing ? [...existing.strokes] : [4,4,4,4];
+      strokeInputsHole = activeHole;
+    }
     renderScoreEntry(container);
   }
   renderScoreboard(container);
@@ -536,16 +552,17 @@ function renderHeader(app){
 }
 
 function renderScoreEntry(container){
-  const holeNum = state.currentHole;
+  const holeNum = editingHole !== null ? editingHole : state.currentHole;
   const seg = segFor(holeNum);
   const pairing = state.pairings[seg];
   const card = el('div',{class:'card'});
-  card.appendChild(el('h3',{style:'margin:0 0 4px'}, `Hole ${holeInSegFor(holeNum)} of this segment`));
+  card.appendChild(el('h3',{style:'margin:0 0 4px'},
+    editingHole !== null ? `Editing Hole ${holeNum}` : `Hole ${holeInSegFor(holeNum)} of this segment`
+  ));
 
   [0,1].forEach(t=>{
     card.appendChild(el('div',{class:'team-label'}, t===0?'Team A':'Team B'));
-    const [used0, used1] = usedFlagsForTeam(holeNum, t);
-    pairing[t].forEach((globalIdx, localIdx)=>{
+    pairing[t].forEach((globalIdx)=>{
       const row = el('div',{class:'player-row'},
         el('div',null,
           el('div',{class:'player-name'}, state.players[globalIdx]),
@@ -572,19 +589,32 @@ function renderScoreEntry(container){
     card.appendChild(el('div',{class:'window-tracker'}, ...dots));
   });
 
-  card.appendChild(el('button',{class:'btn-primary', style:'margin-top:10px', onclick:()=>{
-    submitHole([...strokeInputs]);
-  }}, 'Record Hole'));
+  if(editingHole !== null){
+    card.appendChild(el('div',{style:'display:flex; gap:8px; margin-top:10px'},
+      el('button',{class:'btn-primary', style:'flex:1', onclick:()=>{
+        submitHole([...strokeInputs], editingHole);
+      }}, 'Save Changes'),
+      el('button',{class:'btn-ghost', style:'flex:0 0 auto', onclick:()=>{
+        editingHole = null;
+        strokeInputsHole = null;
+        render();
+      }}, 'Cancel')
+    ));
+  } else {
+    card.appendChild(el('button',{class:'btn-primary', style:'margin-top:10px', onclick:()=>{
+      submitHole([...strokeInputs], holeNum);
+    }}, 'Record Hole'));
+  }
 
   container.appendChild(card);
 }
 
 function renderTiePrompt(container){
-  const holeNum = state.currentHole;
+  const holeNum = pendingTies.holeNum;
   const seg = segFor(holeNum);
   const pairing = state.pairings[seg];
   const card = el('div',{class:'card'});
-  card.appendChild(el('h3',{style:'margin:0 0 4px'}, `Hole ${holeInSegFor(holeNum)} — tie to break`));
+  card.appendChild(el('h3',{style:'margin:0 0 4px'}, `Hole ${holeNum} — tie to break`));
   pendingTies.ties.forEach(t=>{
     if(t in pendingTies.resolved) return;
     const [gA,gB] = pairing[t];
@@ -627,7 +657,7 @@ function renderLog(container){
   const done = state.holes.map((h,i)=>h?({...h, holeNum:i+1}):null).filter(Boolean).reverse();
   if(done.length===0) return;
   const card = el('div',{class:'card'});
-  card.appendChild(el('div',{class:'team-label'},'Hole log'));
+  card.appendChild(el('div',{class:'team-label'},'Hole log · tap to edit'));
   const log = el('div',{class:'log'});
   done.forEach(rec=>{
     const seg = segFor(rec.holeNum);
@@ -638,7 +668,7 @@ function renderLog(container){
     const scoreB = rec.strokes[pairing[1][rec.counted[1]]];
     const winClass = rec.winner==='A'?'win-A':rec.winner==='B'?'win-B':'win-tie';
     const winText = rec.winner==='A'?'Team A':rec.winner==='B'?'Team B':'Halved';
-    log.appendChild(el('div',{class:'log-row'},
+    log.appendChild(el('div',{class:'log-row', style:'cursor:pointer', onclick:()=>startEditHole(rec.holeNum)},
       el('span',null, `#${rec.holeNum}: ${nameA} ${scoreA} — ${nameB} ${scoreB}`),
       el('span',{class:winClass}, winText)
     ));
