@@ -297,6 +297,49 @@
     font-size:18px;
     color:var(--rust);
   }
+  .points-table tr.player-row{ cursor:pointer; }
+  .points-table tr.player-row:active td{ background:var(--good-bg); }
+  .chev{ display:inline-block; width:12px; font-size:10px; color:var(--muted); }
+  .points-table tr.scorecard-detail td{ padding:2px 4px 16px; }
+
+  .scorecard-wrap{ max-width:100%; padding:4px 0 2px; }
+  .sc-summary{ font-size:12.5px; font-weight:700; margin-bottom:9px; }
+  .sc-rel.under{ color:var(--green-accent); }
+  .sc-rel.over{ color:var(--rust); }
+  .sc-rel.even{ color:var(--muted); }
+  .scorecard-row{
+    display:flex; flex-wrap:wrap; align-items:flex-end;
+    gap:6px 5px; max-width:100%;
+  }
+  .scorecard-row + .scorecard-row{ margin-top:10px; }
+  .hole-cell{ flex:0 0 auto; width:24px; min-width:0; text-align:center; }
+  .hole-cell .hn{ font-size:9px; color:var(--muted); font-weight:600; margin-bottom:4px; }
+  .total-cell{
+    flex:0 0 auto; text-align:center;
+    padding-left:6px; margin-left:1px; border-left:1.5px solid var(--line);
+  }
+  .total-cell .hn{
+    font-size:9px; color:var(--muted); font-weight:700;
+    text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px;
+  }
+  .total-cell .tv{ font-weight:800; font-size:14px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .score-shape{
+    width:24px; height:24px; line-height:22px;
+    margin:0 auto; font-size:12px; font-weight:700;
+    box-sizing:border-box; font-variant-numeric:tabular-nums;
+  }
+  .score-shape.par{ border:none; }
+  .score-shape.birdie{ border-radius:50%; border:1.4px solid var(--ink); }
+  .score-shape.eagle{
+    border-radius:50%; border:1.4px solid var(--ink);
+    outline:1.4px solid var(--ink); outline-offset:1.8px;
+  }
+  .score-shape.bogey{ border-radius:4px; border:1.4px solid var(--ink); }
+  .score-shape.doubleBogey{
+    border-radius:4px; border:1.4px solid var(--ink);
+    outline:1.4px solid var(--ink); outline-offset:1.8px;
+  }
+  .score-shape.worse{ background:var(--ink); color:#fff; border-radius:4px; line-height:24px; }
   .log{ max-height:230px; overflow-y:auto; font-size:13px; }
   .log-row{
     display:flex;
@@ -341,9 +384,22 @@
 const STORAGE_KEY = 'sunday-match-v1';
 // Paste your Apps Script Web App URL here after deploying (ends in /exec)
 const API_URL = 'https://script.google.com/macros/s/AKfycbwHg2DpzzaTCaDSPupcASh5y8W8KYSodagx8KrN6IzPXVW6llXAjDF8OxLYrxVmzIs7/exec';
+const HOLE_PARS = [4,4,3,4,5,3,4,3,5, 4,4,4,3,5,4,4,3,4];
 let state = null;
 let loading = true;
 let pendingTies = null; // { strokes, ties: [teamIdx,...], resolved: {}, holeNum }
+
+// Relative to par: eagle/birdie get circles (double/single), bogey/double-bogey
+// get squares (single/double), anything worse is a solid square.
+function classifyScore(strokes, par){
+  const diff = strokes - par;
+  if(diff <= -2) return 'eagle';
+  if(diff === -1) return 'birdie';
+  if(diff === 0) return 'par';
+  if(diff === 1) return 'bogey';
+  if(diff === 2) return 'doubleBogey';
+  return 'worse';
+}
 
 function segFor(holeNum){ return Math.floor((holeNum-1)/6); }
 function holeInSegFor(holeNum){ return ((holeNum-1)%6)+1; }
@@ -401,6 +457,7 @@ function startMatch(names){
     holes: new Array(18).fill(null),
     currentHole: 1
   };
+  expandedPlayers = new Set();
   saveState();
   render();
 }
@@ -412,6 +469,7 @@ async function resetMatch(){
   strokeInputsHole = null;
   notice = null;
   pendingTies = null;
+  expandedPlayers = new Set();
   try{
     await fetch(API_URL, {
       method: 'POST',
@@ -590,6 +648,55 @@ function teamNames(seg){
   ];
 }
 
+function relToParLabel(diff){
+  if(diff===0) return 'E';
+  return (diff>0?'+':'\u2212')+Math.abs(diff);
+}
+
+function buildPlayerScorecard(playerIdx){
+  if(!state.holes[0]){
+    return el('div',{class:'hint', style:'margin:2px 0 0'}, 'No holes recorded yet.');
+  }
+  const frontRow = el('div',{class:'scorecard-row'});
+  const backRow = el('div',{class:'scorecard-row'});
+  let outSum = 0, inSum = 0, played = 0, relCum = 0;
+  for(let h=1; h<=18; h++){
+    const rec = state.holes[h-1];
+    if(!rec) break;
+    played = h;
+    const strokes = rec.strokes[playerIdx];
+    const par = HOLE_PARS[h-1];
+    relCum += (strokes - par);
+    const cls = classifyScore(strokes, par);
+    const cell = el('div',{class:'hole-cell'},
+      el('div',{class:'hn'}, h),
+      el('div',{class:'score-shape '+cls}, strokes)
+    );
+    if(h<=9){
+      frontRow.appendChild(cell);
+      outSum += strokes;
+      if(h===9){
+        frontRow.appendChild(el('div',{class:'total-cell'}, el('div',{class:'hn'},'OUT'), el('div',{class:'tv'},outSum)));
+      }
+    } else {
+      backRow.appendChild(cell);
+      inSum += strokes;
+      if(h===18){
+        backRow.appendChild(el('div',{class:'total-cell'}, el('div',{class:'hn'},'IN'), el('div',{class:'tv'},inSum)));
+        backRow.appendChild(el('div',{class:'total-cell'}, el('div',{class:'hn'},'TOT'), el('div',{class:'tv'},outSum+inSum)));
+      }
+    }
+  }
+  const relClass = relCum>0?'over':relCum<0?'under':'even';
+  const summary = el('div',{class:'sc-summary'},
+    `Thru ${played}: `,
+    el('span',{class:'sc-rel '+relClass}, relToParLabel(relCum))
+  );
+  const wrap = el('div',{class:'scorecard-wrap'}, summary, frontRow);
+  if(backRow.children.length>0) wrap.appendChild(backRow);
+  return wrap;
+}
+
 function el(tag, attrs, ...children){
   const e = document.createElement(tag);
   if(attrs) for(const k in attrs){
@@ -613,6 +720,7 @@ let strokeInputs = [4,4,4,4];
 let strokeInputsHole = null;
 let editingHole = null;
 let notice = null;
+let expandedPlayers = new Set();
 
 function activeHole(){
   return editingHole !== null ? editingHole : Math.min(state.currentHole, 18);
@@ -824,18 +932,34 @@ function renderTiePrompt(container){
   container.appendChild(card);
 }
 
-function renderScoreboard(container){
+function buildPointsTable(rows, titleText){
   const card = el('div',{class:'card'});
-  card.appendChild(el('div',{class:'card-title'}, 'Overall points · 1 per match won'));
-  const rows = rankedPoints();
+  card.appendChild(el('div',{class:'card-title'}, titleText));
   const maxPts = rows[0].pts;
   const table = el('table',{class:'points-table'});
   rows.forEach(r=>{
     const trophy = (maxPts>0 && r.pts===maxPts) ? ' 🏆' : '';
-    table.appendChild(el('tr',null, el('td',null,r.name+trophy), el('td',null,r.pts)));
+    const isOpen = expandedPlayers.has(r.idx);
+    table.appendChild(el('tr',{class:'player-row', onclick:()=>{
+      if(expandedPlayers.has(r.idx)) expandedPlayers.delete(r.idx);
+      else expandedPlayers.add(r.idx);
+      render();
+    }},
+      el('td',null, el('span',{class:'chev'}, isOpen?'▾':'▸'), r.name+trophy),
+      el('td',null, r.pts)
+    ));
+    if(isOpen){
+      table.appendChild(el('tr',{class:'scorecard-detail'},
+        el('td',{colspan:'2'}, buildPlayerScorecard(r.idx))
+      ));
+    }
   });
   card.appendChild(table);
-  container.appendChild(card);
+  return card;
+}
+
+function renderScoreboard(container){
+  container.appendChild(buildPointsTable(rankedPoints(), 'Overall points · 1 per match won · tap a name for their card'));
 }
 
 function renderLog(container){
@@ -876,15 +1000,7 @@ function renderFinal(app){
     el('div',{class:'win-name'}, '🏆 '+(winners.length>1 ? winners.join(' & ')+' tie' : winners[0])),
     el('div',null, `${max} point${max===1?'':'s'}`)
   ));
-  const card = el('div',{class:'card'});
-  card.appendChild(el('div',{class:'card-title'},'Final points'));
-  const table = el('table',{class:'points-table'});
-  rows.forEach(r=>{
-    const trophy = (max>0 && r.pts===max) ? ' 🏆' : '';
-    table.appendChild(el('tr',null, el('td',null,r.name+trophy), el('td',null,r.pts)));
-  });
-  card.appendChild(table);
-  container.appendChild(card);
+  container.appendChild(buildPointsTable(rows, 'Final points · tap a name for their card'));
   renderLog(container);
   container.appendChild(el('div',{class:'foot-actions'},
     el('button',{class:'btn-ghost', onclick:resetMatch},'Start a new match')
