@@ -56,58 +56,72 @@
     box-shadow:0 2px 12px rgba(0,0,0,0.22);
   }
   .hdr-inner{ max-width:480px; margin:0 auto; }
-  .hdr-foot{ text-align:center; margin-top:11px; }
-  .hdr-match{
-    font-size:10px;
-    letter-spacing:0.14em;
-    text-transform:uppercase;
-    opacity:0.5;
-  }
+  .hdr-foot{ text-align:center; margin-top:12px; }
   .hdr-main{
     display:grid;
     grid-template-columns:1fr auto 1fr;
-    align-items:center;
+    align-items:start;
     gap:6px;
   }
   .hdr-team{
     display:flex;
+    flex-direction:column;
     align-items:center;
-    justify-content:center;
     text-align:center;
-    font-size:clamp(15px,4.6vw,19px);
+    font-size:clamp(17px,5.2vw,20px);
     font-weight:800;
-    line-height:1.15;
+    line-height:1.14;
+    min-width:0;
+  }
+  .hdr-team .nm{
+    max-width:100%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .hdr-team .amp{
+    font-size:14px;
+    font-weight:700;
+    line-height:1;
+    margin:3px 0;
   }
   .hdr-team.a{ color:var(--teamA-onDark); }
   .hdr-team.b{ color:var(--teamB-onDark); }
   .hdr-side{ min-width:0; }
   .hdr-up{
-    font-size:clamp(17px,5.2vw,21px);
+    font-size:clamp(18px,5.6vw,22px);
     font-weight:800;
     letter-spacing:0.04em;
     text-transform:uppercase;
     text-align:center;
-    margin-top:7px;
+    margin-top:14px;
     line-height:1.05;
   }
   .hdr-up.a{ color:var(--teamA-onDark); }
   .hdr-up.b{ color:var(--teamB-onDark); }
+  .hdr-up.square{ color:rgba(255,255,255,0.55); }
   .hdr-up.blank{ visibility:hidden; }
-  .hdr-hole{ text-align:center; padding:0 10px; }
+  .hdr-hole{ text-align:center; padding:3px 10px 0; }
   .hdr-hole .lbl{
     font-size:10px;
     letter-spacing:0.16em;
     font-weight:600;
     color:var(--cream);
-    margin-bottom:2px;
+    margin-bottom:3px;
   }
   .hdr-hole .num{
-    font-size:46px;
+    font-size:clamp(52px,16vw,64px);
     font-weight:800;
-    line-height:0.86;
+    line-height:0.82;
     letter-spacing:-0.02em;
   }
-  .hdr-status{ text-align:center; margin-bottom:7px; }
+  .hdr-sub{
+    font-size:10px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    opacity:0.5;
+    margin-top:10px;
+  }
   .pill{
     display:inline-block;
     padding:5px 15px;
@@ -118,9 +132,6 @@
     letter-spacing:0.07em;
     text-transform:uppercase;
   }
-  .pill.lead-a{ color:var(--teamA-onDark); }
-  .pill.lead-b{ color:var(--teamB-onDark); }
-  .pill.square{ color:rgba(255,255,255,0.72); }
   .pill.edit{ color:var(--teamB-onDark); background:rgba(240,170,128,0.16); }
 
   /* ---------- Cards ---------- */
@@ -673,47 +684,42 @@ function renderSetup(app){
 function renderHeader(app){
   const holeNum = activeHole();
   const seg = segFor(holeNum);
-  const [nameA, nameB] = teamNames(seg);
+  const roster = state.pairings[seg].map(team => team.map(i=>firstName(state.players[i])));
   const st = matchStatus(seg);
 
-  // "N UP" sits under the leading team in that team's colour; the losing side
-  // keeps an invisible copy so the hole number stays optically centred.
-  const upText = st.lead === null ? null : `${st.up} up`;
-  const upLine = (side)=> el('div',{
-    class:'hdr-up '+side+(st.lead===(side==='a'?'A':'B') ? '' : ' blank')
-  }, upText || '0 up');
+  // Both sides always carry a status line: A/S on each when level, otherwise
+  // "N UP" under the leader with an invisible twin opposite to hold the grid.
+  const statusLine = (side)=>{
+    if(st.lead === null) return el('div',{class:'hdr-up '+side+' square'}, 'A/S');
+    const leads = st.lead === (side==='a' ? 'A' : 'B');
+    return el('div',{class:'hdr-up '+side+(leads ? '' : ' blank')}, `${st.up} up`);
+  };
 
-  let centreEl = null;
-  if(editingHole !== null){
-    centreEl = el('span',{class:'pill edit'}, `Editing hole ${editingHole}`);
-  } else if(st.lead === null){
-    centreEl = el('span',{class:'pill square'}, 'A/S');
-  }
+  const teamStack = (side)=> el('div',{class:'hdr-team '+side},
+    el('div',{class:'nm'}, roster[side==='a'?0:1][0]),
+    el('div',{class:'amp'}, '&'),
+    el('div',{class:'nm'}, roster[side==='a'?0:1][1])
+  );
 
   const foot = el('div',{class:'hdr-foot'});
-  if(centreEl) foot.appendChild(el('div',{class:'hdr-status'}, centreEl));
-  foot.appendChild(el('div',{class:'hdr-match'}, `Match ${seg+1}`));
+  if(editingHole !== null){
+    foot.appendChild(el('span',{class:'pill edit'}, `Editing hole ${editingHole}`));
+  }
 
-  const header = el('header',null,
+  app.appendChild(el('header',null,
     el('div',{class:'hdr-inner'},
       el('div',{class:'hdr-main'},
-        el('div',{class:'hdr-side a'},
-          el('div',{class:'hdr-team a'}, el('span',null,nameA)),
-          upText ? upLine('a') : null
-        ),
+        el('div',{class:'hdr-side a'}, teamStack('a'), statusLine('a')),
         el('div',{class:'hdr-hole'},
           el('div',{class:'lbl'},'HOLE'),
-          el('div',{class:'num'}, holeNum)
+          el('div',{class:'num'}, holeNum),
+          el('div',{class:'hdr-sub'}, `Match ${seg+1}`)
         ),
-        el('div',{class:'hdr-side b'},
-          el('div',{class:'hdr-team b'}, el('span',null,nameB)),
-          upText ? upLine('b') : null
-        )
+        el('div',{class:'hdr-side b'}, teamStack('b'), statusLine('b'))
       ),
-      foot
+      editingHole !== null ? foot : null
     )
-  );
-  app.appendChild(header);
+  ));
 }
 
 function renderScoreEntry(container){
