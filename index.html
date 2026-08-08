@@ -56,13 +56,12 @@
     box-shadow:0 2px 12px rgba(0,0,0,0.22);
   }
   .hdr-inner{ max-width:480px; margin:0 auto; }
-  .hdr-eyebrow{
-    text-align:center;
+  .hdr-foot{ text-align:center; margin-top:11px; }
+  .hdr-match{
     font-size:10px;
-    letter-spacing:0.12em;
+    letter-spacing:0.14em;
     text-transform:uppercase;
-    opacity:0.55;
-    margin-bottom:8px;
+    opacity:0.5;
   }
   .hdr-main{
     display:grid;
@@ -108,7 +107,7 @@
     line-height:0.86;
     letter-spacing:-0.02em;
   }
-  .hdr-status{ text-align:center; margin-top:11px; }
+  .hdr-status{ text-align:center; margin-bottom:7px; }
   .pill{
     display:inline-block;
     padding:5px 15px;
@@ -691,9 +690,12 @@ function renderHeader(app){
     centreEl = el('span',{class:'pill square'}, 'A/S');
   }
 
+  const foot = el('div',{class:'hdr-foot'});
+  if(centreEl) foot.appendChild(el('div',{class:'hdr-status'}, centreEl));
+  foot.appendChild(el('div',{class:'hdr-match'}, `Match ${seg+1}`));
+
   const header = el('header',null,
     el('div',{class:'hdr-inner'},
-      el('div',{class:'hdr-eyebrow'}, `Match ${seg+1} of 3 · Holes ${seg*6+1}\u2013${seg*6+6}`),
       el('div',{class:'hdr-main'},
         el('div',{class:'hdr-side a'},
           el('div',{class:'hdr-team a'}, el('span',null,nameA)),
@@ -708,7 +710,7 @@ function renderHeader(app){
           upText ? upLine('b') : null
         )
       ),
-      centreEl ? el('div',{class:'hdr-status'}, centreEl) : null
+      foot
     )
   );
   app.appendChild(header);
