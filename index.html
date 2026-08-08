@@ -400,7 +400,35 @@ function finalizeHole(strokes, countedArr, holeNum){
   strokeInputsHole = null;
   pendingTies = null;
   saveState();
+  if(!wasEditing){
+    notice = computeNotice(holeNum);
+  }
   render();
+}
+
+function computeNotice(justFinishedHoleNum){
+  const nextHole = justFinishedHoleNum+1;
+  if(nextHole>18) return null;
+  const finishedSeg = segFor(justFinishedHoleNum);
+  const nextSeg = segFor(nextHole);
+  const pairing = state.pairings[nextSeg];
+  if(nextSeg !== finishedSeg){
+    const teamA = pairing[0].map(i=>state.players[i]).join(' & ');
+    const teamB = pairing[1].map(i=>state.players[i]).join(' & ');
+    return { type:'segment', teamA, teamB, holeRange: `${nextSeg*6+1}-${nextSeg*6+6}` };
+  }
+  if(holePosInWindow(nextHole)===3){
+    const names = [];
+    for(let t=0;t<2;t++){
+      const [used0, used1] = usedFlagsForTeam(nextHole, t);
+      if(!used0 && used1) names.push(state.players[pairing[t][0]]);
+      else if(!used1 && used0) names.push(state.players[pairing[t][1]]);
+    }
+    if(names.length>0){
+      return { type:'forced', names, holeNum: nextHole };
+    }
+  }
+  return null;
 }
 
 function resolveTie(teamIdx, chosenLocal){
@@ -470,6 +498,7 @@ function el(tag, attrs, ...children){
 let strokeInputs = [4,4,4,4];
 let strokeInputsHole = null;
 let editingHole = null;
+let notice = null;
 
 function render(){
   const app = document.getElementById('app');
@@ -494,7 +523,9 @@ function render(){
   const container = el('div',{class:'container'});
   app.appendChild(container);
 
-  if(pendingTies){
+  if(notice){
+    renderNotice(container);
+  } else if(pendingTies){
     renderTiePrompt(container);
   } else {
     const activeHole = editingHole !== null ? editingHole : state.currentHole;
@@ -606,6 +637,23 @@ function renderScoreEntry(container){
     }}, 'Record Hole'));
   }
 
+  container.appendChild(card);
+}
+
+function renderNotice(container){
+  const card = el('div',{class:'card', style:'border:2px solid var(--gold); background:#fffbf0'});
+  if(notice.type==='segment'){
+    card.appendChild(el('h3',{style:'margin:0 0 8px'}, '🔄 Segment complete — new teams'));
+    card.appendChild(el('p',{style:'margin:0 0 4px; font-size:12px; color:#888; text-transform:uppercase; letter-spacing:0.06em'}, `Holes ${notice.holeRange}`));
+    card.appendChild(el('p',{style:'font-size:18px; font-weight:800; margin:6px 0 2px'}, notice.teamA));
+    card.appendChild(el('p',{style:'font-size:14px; color:#888; margin:0 0 4px'}, 'vs'));
+    card.appendChild(el('p',{style:'font-size:18px; font-weight:800; margin:0 0 10px'}, notice.teamB));
+  } else {
+    const namesText = notice.names.join(' and ');
+    card.appendChild(el('h3',{style:'margin:0 0 8px'}, '⚠️ Rule reminder'));
+    card.appendChild(el('p',null, `On hole ${notice.holeNum}, you must count ${namesText}'s score for their team.`));
+  }
+  card.appendChild(el('button',{class:'btn-primary', style:'margin-top:10px', onclick:()=>{ notice=null; render(); }}, 'Got it'));
   container.appendChild(card);
 }
 
